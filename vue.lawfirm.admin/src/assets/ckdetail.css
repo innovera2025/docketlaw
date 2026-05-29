@@ -1,0 +1,136 @@
+/* texts */
+.ckdetail p {
+  font-size: 24px;
+}
+.ckdetail h1 {
+  font-size: 34px;
+  font-weight: 600;
+}
+.ckdetail h2 {
+  font-size: 32px;
+  font-weight: 600;
+}
+.ckdetail h3 {
+  font-size: 30px;
+  font-weight: 600;
+}
+.ckdetail h4 {
+  font-size: 28px;
+  font-weight: 600;
+}
+.ckdetail h5 {
+  font-size: 28px;
+  font-weight: 600;
+}
+.ckdetail h6 {
+  font-size: 24px;
+  font-weight: 600;
+}
+.ckdetail strong {
+  font-weight: 600;
+}
+
+/* list */
+.ckdetail ol {
+  list-style-type: decimal;
+  margin-left: 26px;
+  font-size: 24px;
+}
+.ckdetail ul {
+  list-style-type: disc;
+  margin-left: 26px;
+  font-size: 24px;
+}
+.todo-list {
+  list-style-type: none;
+  margin-left: 0px;
+  font-size: 24px;
+}
+
+/* image */
+.image-style-block-align-left {
+  margin-right: auto;
+  margin-left: 0;
+}
+.image-style-block-align-right {
+  margin-right: 0;
+  margin-left: auto;
+}
+.image {
+  margin: auto;
+  display: flex;
+  justify-content: center;
+}
+.image-inline {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: flex-start;
+}
+.image-inline img {
+  flex-grow: 1;
+  flex-shrink: 1;
+  max-width: 100%;
+}
+.ckdetail figcaption {
+  text-align: center;
+  font-size: 24px;
+  background: #f7f7f7;
+}
+.image-style-align-left {
+  float: inline-start;
+  margin-right: 1rem;
+}
+.image-style-align-right {
+  float: inline-end;
+  margin-left: 1rem;
+}
+
+/* table */
+.ckdetail table {
+  border: solid 1px #bfbfbf;
+  padding: 0.2rem 1rem;
+}
+.ckdetail th {
+  border: solid 1px #bfbfbf;
+  padding: 0.2rem 1rem;
+}
+.ckdetail tr {
+  border: solid 1px #bfbfbf;
+  padding: 0.2rem 1rem;
+}
+.ckdetail td {
+  border: solid 1px #bfbfbf;
+  padding: 0.2rem 1rem;
+}
+.ckdetail .table {
+  margin: 0.9em auto;
+  padding: auto;
+  display: table;
+}
+
+/* markers */
+.marker-yellow {
+  background-color: #fdfd77;
+}
+.marker-green {
+  background-color: #62f962;
+}
+.marker-pink {
+  background-color: #fc7899;
+}
+.marker-blue {
+  background-color: #72ccfd;
+}
+.pen-red {
+  color: #e71313;
+  background-color: transparent;
+}
+.pen-green {
+  color: #128a00;
+  background-color: transparent;
+}
+
+/* editor */
+.ck .ck-content {
+  background-color: black;
+}

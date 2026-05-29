@@ -1,0 +1,1148 @@
+<script setup lang="ts">
+import { md5 } from 'js-md5'
+import { API } from '@/api'
+import { onMounted, nextTick, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { push } from 'notivue'
+import { useUserStore } from '@/stores'
+
+const route = useRoute()
+const router = useRouter()
+const userStore = useUserStore()
+
+const data = ref({} as any)
+const timeline = ref([] as any[])
+const loginLogs = ref([] as any[])
+const isLoadingLogs = ref(false)
+const newPasswordForm = ref({
+  password: '',
+  confirmPassword: '',
+})
+const newPasswordErrors = ref({
+  password: '',
+  confirmPassword: '',
+})
+
+const permissions = ref({
+  is_sec_calendar: 1 as number,
+  is_add_appointment: 0 as number,
+  is_edit_appointment: 0 as number,
+  is_delete_appointment: 0 as number,
+  is_change_appointment_status: 0 as number,
+  is_sec_cases: 1 as number,
+  is_view_case_steps: 0 as number,
+  is_add_case: 0 as number,
+  is_add_case_step: 0 as number,
+  is_delete_case: 0 as number,
+  is_edit_case: 0 as number,
+  is_edit_case_step: 0 as number,
+  is_delete_case_step: 0 as number,
+  is_sec_documents: 1 as number,
+  is_upload_document: 0 as number,
+  is_download_document: 0 as number,
+  is_delete_document: 0 as number,
+  is_preview_file: 0 as number,
+  is_sec_ocr: 1 as number,
+  is_request_ocr: 0 as number,
+  is_search_ocr: 0 as number,
+  is_sec_employee: 1 as number,
+  is_delete_employee: 0 as number,
+  is_view_employee_detail: 0 as number,
+  is_manage_access: 0 as number,
+  is_add_employee: 0 as number,
+  is_view_history: 0 as number,
+  is_edit_employee: 0 as number,
+  is_sec_report: 0 as number,
+  is_export_report: 0 as number,
+  is_financial_report: 0 as number,
+})
+
+watch(
+  () => permissions.value.is_sec_calendar,
+  (val) => {
+    if (!val) {
+      permissions.value.is_add_appointment = 0
+      permissions.value.is_edit_appointment = 0
+      permissions.value.is_delete_appointment = 0
+      permissions.value.is_change_appointment_status = 0
+    }
+  },
+)
+watch(
+  () => permissions.value.is_sec_cases,
+  (val) => {
+    if (!val) {
+      permissions.value.is_view_case_steps = 0
+      permissions.value.is_add_case = 0
+      permissions.value.is_add_case_step = 0
+      permissions.value.is_delete_case = 0
+      permissions.value.is_edit_case = 0
+      permissions.value.is_edit_case_step = 0
+      permissions.value.is_delete_case_step = 0
+    }
+  },
+)
+watch(
+  () => permissions.value.is_sec_documents,
+  (val) => {
+    if (!val) {
+      permissions.value.is_upload_document = 0
+      permissions.value.is_download_document = 0
+      permissions.value.is_delete_document = 0
+      permissions.value.is_preview_file = 0
+    }
+  },
+)
+watch(
+  () => permissions.value.is_sec_ocr,
+  (val) => {
+    if (!val) {
+      permissions.value.is_request_ocr = 0
+      permissions.value.is_search_ocr = 0
+    }
+  },
+)
+watch(
+  () => permissions.value.is_sec_employee,
+  (val) => {
+    if (!val) {
+      permissions.value.is_delete_employee = 0
+      permissions.value.is_view_employee_detail = 0
+      permissions.value.is_manage_access = 0
+      permissions.value.is_add_employee = 0
+      permissions.value.is_view_history = 0
+      permissions.value.is_edit_employee = 0
+    }
+  },
+)
+const showAllPermissions = ref(true)
+
+const isEditing = ref(false)
+const editForm = ref({
+  full_name: '',
+  email: '',
+  tel: '',
+  type: 'lawyer' as 'lawyer' | 'employee',
+  license_no: '',
+  specialization: [] as string[],
+  department: '',
+  remark: '',
+})
+
+const handleEditStart = () => {
+  editForm.value = {
+    full_name: data.value?.details?.full_name || '',
+    email: data.value?.details?.email || '',
+    tel: data.value?.details?.tel || '',
+    type: data.value?.details?.type || 'lawyer',
+    license_no: data.value?.details?.license_no || '',
+    specialization: data.value?.details?.specialization || [],
+    department: data.value?.details?.department || '',
+    remark: data.value?.details?.remark || '',
+  }
+  isEditing.value = true
+}
+
+const handleCancelEdit = () => {
+  isEditing.value = false
+}
+
+const openBlock = ref(false)
+const openUnblock = ref(false)
+
+const handleBlock = async () => {
+  if (!route.params.id) return
+
+  await API('specific\\lawfirm\\lawyer_user', 'update', {
+    user_id: +route.params.id,
+    details: {
+      full_name: data.value?.details?.full_name || '',
+      email: data.value?.details?.email || '',
+      tel: data.value?.details?.tel || '',
+      type: data.value?.details?.type || '',
+      license_no: data.value?.details?.license_no || '',
+      specialization: data.value?.details?.specialization || [],
+      department: data.value?.details?.department || '',
+      remark: data.value?.details?.remark || '',
+      is_login: 0,
+      permissions: {
+        is_sec_calendar: permissions.value.is_sec_calendar ? 1 : 0,
+        is_add_appointment: permissions.value.is_add_appointment ? 1 : 0,
+        is_edit_appointment: permissions.value.is_edit_appointment ? 1 : 0,
+        is_delete_appointment: permissions.value.is_delete_appointment ? 1 : 0,
+        is_change_appointment_status: permissions.value.is_change_appointment_status ? 1 : 0,
+
+        is_sec_cases: permissions.value.is_sec_cases ? 1 : 0,
+        is_view_case_steps: permissions.value.is_view_case_steps ? 1 : 0,
+        is_add_case: permissions.value.is_add_case ? 1 : 0,
+        is_add_case_step: permissions.value.is_add_case_step ? 1 : 0,
+        is_delete_case: permissions.value.is_delete_case ? 1 : 0,
+        is_edit_case: permissions.value.is_edit_case ? 1 : 0,
+        is_edit_case_step: permissions.value.is_edit_case_step ? 1 : 0,
+        is_delete_case_step: permissions.value.is_delete_case_step ? 1 : 0,
+
+        is_sec_documents: permissions.value.is_sec_documents ? 1 : 0,
+        is_upload_document: permissions.value.is_upload_document ? 1 : 0,
+        is_download_document: permissions.value.is_download_document ? 1 : 0,
+        is_delete_document: permissions.value.is_delete_document ? 1 : 0,
+        is_preview_file: permissions.value.is_preview_file ? 1 : 0,
+
+        is_sec_ocr: permissions.value.is_sec_ocr ? 1 : 0,
+        is_request_ocr: permissions.value.is_request_ocr ? 1 : 0,
+        is_search_ocr: permissions.value.is_search_ocr ? 1 : 0,
+
+        is_sec_employee: permissions.value.is_sec_employee ? 1 : 0,
+        is_delete_employee: permissions.value.is_delete_employee ? 1 : 0,
+        is_view_employee_detail: permissions.value.is_view_employee_detail ? 1 : 0,
+        is_manage_access: permissions.value.is_manage_access ? 1 : 0,
+        is_add_employee: permissions.value.is_add_employee ? 1 : 0,
+        is_view_history: permissions.value.is_view_history ? 1 : 0,
+        is_edit_employee: permissions.value.is_edit_employee ? 1 : 0,
+
+        is_sec_report: permissions.value.is_sec_report ? 1 : 0,
+        is_export_report: permissions.value.is_export_report ? 1 : 0,
+        is_financial_report: permissions.value.is_financial_report ? 1 : 0,
+      },
+    },
+  })
+
+  const res = await API(
+    'amstx5\\User',
+    'ban',
+    {
+      id: +route.params.id,
+    },
+    true,
+  )
+
+  if (res.response_status) {
+    push.success('บล็อคผู้ใช้สำเร็จ!')
+    openBlock.value = false
+    await handleSelect()
+  } else {
+    push.error('บล็อคผู้ใช้ไม่สำเร็จ!\n' + res.response_message)
+  }
+}
+
+const handleUnblock = async () => {
+  if (!route.params.id) return
+
+  await API('specific\\lawfirm\\lawyer_user', 'update', {
+    user_id: +route.params.id,
+    details: {
+      full_name: data.value?.details?.full_name || '',
+      email: data.value?.details?.email || '',
+      tel: data.value?.details?.tel || '',
+      type: data.value?.details?.type || '',
+      license_no: data.value?.details?.license_no || '',
+      specialization: data.value?.details?.specialization || [],
+      department: data.value?.details?.department || '',
+      remark: data.value?.details?.remark || '',
+      is_login: 1,
+      permissions: {
+        is_sec_calendar: permissions.value.is_sec_calendar ? 1 : 0,
+        is_add_appointment: permissions.value.is_add_appointment ? 1 : 0,
+        is_edit_appointment: permissions.value.is_edit_appointment ? 1 : 0,
+        is_delete_appointment: permissions.value.is_delete_appointment ? 1 : 0,
+        is_change_appointment_status: permissions.value.is_change_appointment_status ? 1 : 0,
+
+        is_sec_cases: permissions.value.is_sec_cases ? 1 : 0,
+        is_view_case_steps: permissions.value.is_view_case_steps ? 1 : 0,
+        is_add_case: permissions.value.is_add_case ? 1 : 0,
+        is_add_case_step: permissions.value.is_add_case_step ? 1 : 0,
+        is_delete_case: permissions.value.is_delete_case ? 1 : 0,
+        is_edit_case: permissions.value.is_edit_case ? 1 : 0,
+        is_edit_case_step: permissions.value.is_edit_case_step ? 1 : 0,
+        is_delete_case_step: permissions.value.is_delete_case_step ? 1 : 0,
+
+        is_sec_documents: permissions.value.is_sec_documents ? 1 : 0,
+        is_upload_document: permissions.value.is_upload_document ? 1 : 0,
+        is_download_document: permissions.value.is_download_document ? 1 : 0,
+        is_delete_document: permissions.value.is_delete_document ? 1 : 0,
+        is_preview_file: permissions.value.is_preview_file ? 1 : 0,
+
+        is_sec_ocr: permissions.value.is_sec_ocr ? 1 : 0,
+        is_request_ocr: permissions.value.is_request_ocr ? 1 : 0,
+        is_search_ocr: permissions.value.is_search_ocr ? 1 : 0,
+
+        is_sec_employee: permissions.value.is_sec_employee ? 1 : 0,
+        is_delete_employee: permissions.value.is_delete_employee ? 1 : 0,
+        is_view_employee_detail: permissions.value.is_view_employee_detail ? 1 : 0,
+        is_manage_access: permissions.value.is_manage_access ? 1 : 0,
+        is_add_employee: permissions.value.is_add_employee ? 1 : 0,
+        is_view_history: permissions.value.is_view_history ? 1 : 0,
+        is_edit_employee: permissions.value.is_edit_employee ? 1 : 0,
+
+        is_sec_report: permissions.value.is_sec_report ? 1 : 0,
+        is_export_report: permissions.value.is_export_report ? 1 : 0,
+        is_financial_report: permissions.value.is_financial_report ? 1 : 0,
+      },
+    },
+  })
+
+  const res = await API(
+    'amstx5\\User',
+    'unBan',
+    {
+      id: +route.params.id,
+    },
+    true,
+  )
+
+  if (res.response_status) {
+    push.success('ปลดบล็อคผู้ใช้สำเร็จ!')
+    openUnblock.value = false
+    await handleSelect()
+  } else {
+    push.error('ปลดบล็อคผู้ใช้ไม่สำเร็จ!\n' + res.response_message)
+  }
+}
+
+watch(
+  () => editForm.value.type,
+  (val) => {
+    if (val === 'employee') {
+      editForm.value.license_no = ''
+      editForm.value.specialization = []
+      editForm.value.department = ''
+    }
+  },
+)
+
+const handleSaveProfile = async () => {
+  const res = await API('specific\\lawfirm\\lawyer_user', 'update', {
+    user_id: +route.params.id,
+    details: {
+      full_name: editForm.value.full_name,
+      email: editForm.value.email,
+      tel: editForm.value.tel,
+      type: editForm.value.type,
+      license_no: editForm.value.license_no,
+      specialization: editForm.value.specialization,
+      department: editForm.value.department,
+      remark: editForm.value.remark,
+      is_login: data.value?.details?.is_login || 0,
+      permissions: {
+        is_sec_calendar: permissions.value.is_sec_calendar ? 1 : 0,
+        is_add_appointment: permissions.value.is_add_appointment ? 1 : 0,
+        is_edit_appointment: permissions.value.is_edit_appointment ? 1 : 0,
+        is_delete_appointment: permissions.value.is_delete_appointment ? 1 : 0,
+        is_change_appointment_status: permissions.value.is_change_appointment_status ? 1 : 0,
+        is_sec_cases: permissions.value.is_sec_cases ? 1 : 0,
+        is_view_case_steps: permissions.value.is_view_case_steps ? 1 : 0,
+        is_add_case: permissions.value.is_add_case ? 1 : 0,
+        is_add_case_step: permissions.value.is_add_case_step ? 1 : 0,
+        is_delete_case: permissions.value.is_delete_case ? 1 : 0,
+        is_edit_case: permissions.value.is_edit_case ? 1 : 0,
+        is_edit_case_step: permissions.value.is_edit_case_step ? 1 : 0,
+        is_delete_case_step: permissions.value.is_delete_case_step ? 1 : 0,
+        is_sec_documents: permissions.value.is_sec_documents ? 1 : 0,
+        is_upload_document: permissions.value.is_upload_document ? 1 : 0,
+        is_download_document: permissions.value.is_download_document ? 1 : 0,
+        is_delete_document: permissions.value.is_delete_document ? 1 : 0,
+        is_preview_file: permissions.value.is_preview_file ? 1 : 0,
+        is_sec_ocr: permissions.value.is_sec_ocr ? 1 : 0,
+        is_request_ocr: permissions.value.is_request_ocr ? 1 : 0,
+        is_search_ocr: permissions.value.is_search_ocr ? 1 : 0,
+        is_sec_employee: permissions.value.is_sec_employee ? 1 : 0,
+        is_delete_employee: permissions.value.is_delete_employee ? 1 : 0,
+        is_view_employee_detail: permissions.value.is_view_employee_detail ? 1 : 0,
+        is_manage_access: permissions.value.is_manage_access ? 1 : 0,
+        is_add_employee: permissions.value.is_add_employee ? 1 : 0,
+        is_view_history: permissions.value.is_view_history ? 1 : 0,
+        is_edit_employee: permissions.value.is_edit_employee ? 1 : 0,
+        is_sec_report: permissions.value.is_sec_report ? 1 : 0,
+        is_export_report: permissions.value.is_export_report ? 1 : 0,
+        is_financial_report: permissions.value.is_financial_report ? 1 : 0,
+      },
+    },
+  })
+  if (res.response_status) {
+    data.value.details.full_name = editForm.value.full_name
+    data.value.details.email = editForm.value.email
+    data.value.details.tel = editForm.value.tel
+    data.value.details.type = editForm.value.type
+    data.value.details.license_no = editForm.value.license_no
+    data.value.details.specialization = editForm.value.specialization
+    data.value.details.department = editForm.value.department
+    data.value.details.remark = editForm.value.remark
+    push.success('บันทึกข้อมูลสำเร็จ!')
+    isEditing.value = false
+  } else {
+    push.error('บันทึกข้อมูลไม่สำเร็จ!\n' + res.response_message)
+  }
+}
+
+watch(
+  () => permissions.value.is_sec_report,
+  (val) => {
+    if (!val) {
+      permissions.value.is_export_report = 0
+      permissions.value.is_financial_report = 0
+    }
+  },
+)
+
+const parseBrowser = (userAgent: string) => {
+  let browser = 'Unknown Browser'
+  let os = 'Unknown OS'
+
+  // Detect browser
+  if (userAgent.includes('Chrome') && !userAgent.includes('Edg')) {
+    browser = 'Chrome'
+  } else if (userAgent.includes('Firefox')) {
+    browser = 'Firefox'
+  } else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) {
+    browser = 'Safari'
+  } else if (userAgent.includes('Edg')) {
+    browser = 'Edge'
+  }
+
+  // Detect OS
+  if (userAgent.includes('Windows NT 10.0')) {
+    os = 'Windows'
+  } else if (userAgent.includes('Windows')) {
+    os = 'Windows'
+  } else if (userAgent.includes('Macintosh') || userAgent.includes('Mac OS')) {
+    os = 'macOS'
+  } else if (userAgent.includes('Linux')) {
+    os = 'Linux'
+  } else if (userAgent.includes('Android')) {
+    os = 'Android'
+  } else if (userAgent.includes('iPhone') || userAgent.includes('iPad')) {
+    os = 'iOS'
+  }
+
+  return `${browser} on ${os}`
+}
+
+const parseDevice = (userAgent: string, isMobile: boolean) => {
+  if (isMobile) {
+    if (userAgent.includes('iPhone')) return 'iPhone'
+    if (userAgent.includes('iPad')) return 'iPad'
+    if (userAgent.includes('Android')) return 'Android Mobile'
+    return 'Mobile Device'
+  }
+
+  if (userAgent.includes('Windows NT 10.0')) return 'Windows 10/11 PC'
+  if (userAgent.includes('Windows')) return 'Windows PC'
+  if (userAgent.includes('Macintosh')) {
+    if (userAgent.includes('MacBook')) return 'MacBook'
+    return 'Apple Mac'
+  }
+  if (userAgent.includes('Linux')) return 'Linux PC'
+
+  return 'Desktop Computer'
+}
+
+const getLocationFromIP = async (ip: string) => {
+  if (!ip) return 'Unknown Location'
+  try {
+    //ipwho
+    const res3 = await fetch(`https://ipwho.is/${ip}`)
+    const data3 = await res3.json()
+
+    if (data3.city && data3.country) {
+      return `${data3.city}, ${data3.country}`
+    }
+
+    //freegeoip
+    const res4 = await fetch(`https://freegeoip.app/json/${ip}`)
+    const data4 = await res4.json()
+
+    if (data4.city && data4.country) {
+      return `${data4.city}, ${data4.country}`
+    }
+
+    //ininfo
+    const res2 = await fetch(`https://ipinfo.io/${ip}/json`)
+    const data2 = await res2.json()
+
+    if (data2.region && data2.country) {
+      return `${data2.region}, ${data2.country}`
+    }
+
+    return 'Unknown Location'
+  } catch (error) {
+    console.error('Error fetching location:', error)
+    return 'Unknown Location'
+  }
+}
+
+const handleSelect = async () => {
+  // TODO: call API to get employee data by route.params.id
+  const res = await API(
+    'amstx5\\User',
+    'getByID',
+    {
+      id: route.params.id,
+    },
+    true,
+  )
+  if (res.response_status) {
+    data.value = res.response_data
+    const rawPerms = res?.response_data?.details?.permissions || {}
+    const parsedPerms = Object.fromEntries(
+      Object.entries(rawPerms).map(([k, v]) => [k, Number(v as string | number)]),
+    )
+    permissions.value = { ...permissions.value, ...parsedPerms }
+    setTimeout(() => {
+      watch(
+        permissions,
+        () => {
+          handleUpdatePermissions()
+        },
+        { deep: true },
+      )
+    }, 200)
+  } else {
+    push.error('โหลดข้อมูลไม่สำเร็จ!\n' + res.response_message)
+  }
+
+  const typeStyle: Record<string, { color: string; bg: string }> = {
+    login: { color: 'bg-[#74de3d]', bg: 'bg-[#e9fae2]' },
+    logout: { color: 'bg-[#74de3d]', bg: 'bg-[#e9fae2]' },
+    cases: { color: 'bg-[#ffab00]', bg: 'bg-[#fff2db]' },
+    calendar: { color: 'bg-[#ff725d]', bg: 'bg-[#ffe3e0]' },
+    file: { color: 'bg-[#16b1ff]', bg: 'bg-[#e7f5ff]' },
+  }
+  const timelineRes = await API('specific\\lawfirm\\timeline', 'select', {
+    user_id: +route.params.id,
+  })
+  if (timelineRes?.response_status) {
+    timeline.value = timelineRes.response_data.slice(0, 10).map((item: any) => ({
+      action: item.name,
+      detail: item.description,
+      time: item.time,
+      ...(typeStyle[item.type] ?? { color: 'bg-[#16b1ff]', bg: 'bg-[#e7f5ff]' }),
+    }))
+  }
+}
+
+const handleLoginLog = async () => {
+  try {
+    const res = await API(
+      'amstx5\\User_Log',
+      'select',
+      {
+        start_date: '',
+        end_date: '',
+        where: {
+          type: 'login',
+          user_id: +route.params.id,
+        },
+        order_by: 'datetime DESC',
+      },
+      true,
+    )
+
+    const logsWithDetails = await Promise.all(
+      res.response_data.map(async (item: any) => {
+        const details = JSON.parse(item.insert_detail)
+        // const location = await getLocationFromIP(details.ip)
+
+        return {
+          ...item,
+          browser: parseBrowser(details.user_agent),
+          device: parseDevice(details.user_agent, details.is_mobile),
+          location: details.ip,
+          icon_name: details.user_agent.includes('Windows')
+            ? 'windows'
+            : details.user_agent.includes('Macintosh')
+              ? 'mac'
+              : 'other',
+        }
+      }),
+    )
+
+    loginLogs.value = logsWithDetails
+    isLoadingLogs.value = true
+  } catch (error: any) {
+    push.error('เกิดข้อผิดพลาด: ' + error.message)
+    isLoadingLogs.value = true
+  }
+}
+
+const handleUpdatePermissions = async () => {
+  const res = await API('specific\\lawfirm\\lawyer_user', 'update', {
+    user_id: +route.params.id,
+    details: {
+      full_name: data.value?.details?.full_name || '',
+      email: data.value?.details?.email || '',
+      tel: data.value?.details?.tel || '',
+      type: data.value?.details?.type || '',
+      license_no: data.value?.details?.license_no || '',
+      specialization: data.value?.details?.specialization || [],
+      department: data.value?.details?.department || '',
+      remark: data.value?.details?.remark || '',
+      is_login: data.value?.details?.is_login || 0,
+      permissions: {
+        is_sec_calendar: permissions.value.is_sec_calendar ? 1 : 0,
+        is_add_appointment: permissions.value.is_add_appointment ? 1 : 0,
+        is_edit_appointment: permissions.value.is_edit_appointment ? 1 : 0,
+        is_delete_appointment: permissions.value.is_delete_appointment ? 1 : 0,
+        is_change_appointment_status: permissions.value.is_change_appointment_status ? 1 : 0,
+
+        is_sec_cases: permissions.value.is_sec_cases ? 1 : 0,
+        is_view_case_steps: permissions.value.is_view_case_steps ? 1 : 0,
+        is_add_case: permissions.value.is_add_case ? 1 : 0,
+        is_add_case_step: permissions.value.is_add_case_step ? 1 : 0,
+        is_delete_case: permissions.value.is_delete_case ? 1 : 0,
+        is_edit_case: permissions.value.is_edit_case ? 1 : 0,
+        is_edit_case_step: permissions.value.is_edit_case_step ? 1 : 0,
+        is_delete_case_step: permissions.value.is_delete_case_step ? 1 : 0,
+
+        is_sec_documents: permissions.value.is_sec_documents ? 1 : 0,
+        is_upload_document: permissions.value.is_upload_document ? 1 : 0,
+        is_download_document: permissions.value.is_download_document ? 1 : 0,
+        is_delete_document: permissions.value.is_delete_document ? 1 : 0,
+        is_preview_file: permissions.value.is_preview_file ? 1 : 0,
+
+        is_sec_ocr: permissions.value.is_sec_ocr ? 1 : 0,
+        is_request_ocr: permissions.value.is_request_ocr ? 1 : 0,
+        is_search_ocr: permissions.value.is_search_ocr ? 1 : 0,
+
+        is_sec_employee: permissions.value.is_sec_employee ? 1 : 0,
+        is_delete_employee: permissions.value.is_delete_employee ? 1 : 0,
+        is_view_employee_detail: permissions.value.is_view_employee_detail ? 1 : 0,
+        is_manage_access: permissions.value.is_manage_access ? 1 : 0,
+        is_add_employee: permissions.value.is_add_employee ? 1 : 0,
+        is_view_history: permissions.value.is_view_history ? 1 : 0,
+        is_edit_employee: permissions.value.is_edit_employee ? 1 : 0,
+
+        is_sec_report: permissions.value.is_sec_report ? 1 : 0,
+        is_export_report: permissions.value.is_export_report ? 1 : 0,
+        is_financial_report: permissions.value.is_financial_report ? 1 : 0,
+      },
+    },
+  })
+  if (res.response_status) {
+    push.success('บันทึกสิทธิสำเร็จ!')
+  } else {
+    push.error('บันทึกสิทธิไม่สำเร็จ!\n' + res.response_message)
+  }
+}
+
+const handleUpdatePassword = async () => {
+  // Reset errors
+  newPasswordErrors.value = {
+    password: '',
+    confirmPassword: '',
+  }
+
+  // Validate
+  if (!newPasswordForm.value.password) {
+    newPasswordErrors.value.password = 'กรุณากรอกรหัสผ่าน'
+    return
+  }
+
+  // Check password length (at least 8 characters)
+  if (newPasswordForm.value.password.length < 8) {
+    newPasswordErrors.value.password = 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร'
+    return
+  }
+
+  // Check for uppercase letter
+  if (!/[A-Z]/.test(newPasswordForm.value.password)) {
+    newPasswordErrors.value.password = 'รหัสผ่านต้องมีตัวพิมพ์ใหญ่อย่างน้อย 1 ตัว'
+    return
+  }
+
+  // Check for special character
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(newPasswordForm.value.password)) {
+    newPasswordErrors.value.password = 'รหัสผ่านต้องมีสัญลักษณ์พิเศษอย่างน้อย 1 ตัว'
+    return
+  }
+
+  if (!newPasswordForm.value.confirmPassword) {
+    newPasswordErrors.value.confirmPassword = 'กรุณากรอกยืนยันรหัสผ่าน'
+    return
+  }
+
+  if (newPasswordForm.value.password !== newPasswordForm.value.confirmPassword) {
+    newPasswordErrors.value.confirmPassword = 'รหัสผ่านไม่ตรงกัน'
+    return
+  }
+
+  if (!route.params.id) return
+
+  const res = await API(
+    'amstx5\\User',
+    'updatePasswordByID',
+    {
+      id: +route.params.id,
+      new_password: md5(newPasswordForm.value.password),
+    },
+    true,
+  )
+
+  if (res.response_status) {
+    push.success('เปลี่ยนรหัสผ่านสําเร็จ!')
+    // Reset form
+    newPasswordForm.value = {
+      password: '',
+      confirmPassword: '',
+    }
+    return
+  } else {
+    push.error('เปลี่ยนรหัสผ่านไม่สําเร็จ!\n' + res.response_message)
+    return
+  }
+}
+
+onMounted(async () => {
+  await handleSelect()
+  await handleLoginLog()
+})
+</script>
+
+<template>
+  <div class="space-y-4">
+    <!-- Body -->
+    <div class="flex gap-[25px] items-start max-[1400px]:flex-col">
+      <!-- Left: Profile Card -->
+      <div
+        class="relative flex flex-col border border-[#E7E8E9] rounded-[8px] overflow-hidden w-[520px] max-[1400px]:w-full"
+      >
+        <!-- Header -->
+        <div class="flex gap-4 flex-wrap items-center justify-between p-6">
+          <div>
+            <p class="text-[22px] text-[#3B4854]">โพรไฟล์</p>
+            <p class="text-[16px] text-[#777F87]">
+              คุณสามารถแก้ไขข้อมูลได้เพียงบางส่วน หากต้องการแก้ไขข้อมูลที่ ไม่สามารถแก้ไขได้
+              โปรดติดต่อผู้ดูแลระบบ
+            </p>
+          </div>
+        </div>
+
+        <!-- Profile Section -->
+        <div class="flex flex-col items-center pt-10 pb-6 px-6">
+          <!-- Avatar -->
+          <div
+            class="size-[120px] rounded-[10px] bg-[#3b4854] flex items-center justify-center overflow-hidden"
+          >
+            <span class="text-[48px] font-bold text-white uppercase">
+              {{ data?.details?.full_name?.[0] || 'U' }}
+            </span>
+          </div>
+
+          <!-- Name -->
+          <p class="mt-4 text-[20px] font-semibold text-[#3b4854]">
+            {{ data?.details?.full_name || '-' }}
+          </p>
+
+          <!-- Type badge -->
+          <div class="mt-2 px-4 py-2 bg-[#EDEFF1] rounded-[6px]">
+            <span class="text-[16px] text-[#8e9aaa]">{{
+              data?.details?.type === 'lawyer' ? 'ทนายความ' : 'พนักงาน'
+            }}</span>
+          </div>
+        </div>
+
+        <p class="text-[20px] px-6 text-[#3b4854] mb-[20px]">ข้อมูลส่วนบุคคล</p>
+        <!-- Divider -->
+        <div class="h-px bg-[#E7E8E9] mx-6" />
+
+        <!-- Info Section -->
+        <div class="flex-1 px-6 pt-6 pb-4 space-y-[20px]">
+          <!-- View mode -->
+          <template v-if="!isEditing">
+            <base-show-data label="อีเมล" label-width="180px">
+              <span class="text-[16px] text-[#202125]">{{ data?.details?.email || '-' }}</span>
+            </base-show-data>
+
+            <base-show-data label="เบอร์ติดต่อ" label-width="180px">
+              <span class="text-[16px] text-[#202125]">{{ data?.details?.tel || '-' }}</span>
+            </base-show-data>
+
+            <base-show-data label="ประเภทพนักงาน" label-width="180px">
+              <span class="text-[16px] text-[#202125]">{{
+                data?.details?.type === 'lawyer' ? 'ทนายความ' : 'พนักงาน'
+              }}</span>
+            </base-show-data>
+
+            <base-show-data
+              v-if="data?.details?.type === 'lawyer'"
+              label="เลขใบประกอบวิชาชีพ"
+              label-width="180px"
+            >
+              <span class="text-[16px] text-[#202125]">{{ data?.details?.license_no || '-' }}</span>
+            </base-show-data>
+
+            <base-show-data
+              v-if="data?.details?.type === 'lawyer'"
+              label="ความเชี่ยวชาญเฉพาะ"
+              label-width="180px"
+            >
+              <div class="flex flex-wrap gap-2">
+                <template v-if="data?.details?.specialization?.length">
+                  <div
+                    v-for="spec in data?.details?.specialization"
+                    :key="spec"
+                    class="px-3 py-[6px] bg-[#def3ff] rounded-[6px]"
+                  >
+                    <span class="text-[16px] text-[#16b1ff]">{{ spec }}</span>
+                  </div>
+                </template>
+                <span v-else>-</span>
+              </div>
+            </base-show-data>
+
+            <base-show-data
+              v-if="data?.details?.type === 'lawyer'"
+              label="สังกัด"
+              label-width="180px"
+            >
+              <span class="text-[16px] text-[#202125]">{{ data?.details?.department || '-' }}</span>
+            </base-show-data>
+
+            <base-show-data label="หมายเหตุ" label-width="180px">
+              {{ data?.details?.remark || '-' }}
+            </base-show-data>
+          </template>
+
+          <!-- Edit mode -->
+          <template v-else>
+            <base-text-input
+              v-model="editForm.full_name"
+              label="ชื่อ"
+              label-type="vertical"
+              placeholder="กรอก"
+              required
+            />
+
+            <base-text-input
+              v-model="editForm.email"
+              label="อีเมล"
+              label-type="vertical"
+              placeholder="example@email.com"
+            />
+
+            <base-text-input
+              v-model="editForm.tel"
+              label="เบอร์ติดต่อ"
+              label-type="vertical"
+              placeholder="กรอก"
+            />
+
+            <!-- ประเภทพนักงาน -->
+            <div class="space-y-2">
+              <p class="text-[15px] text-[#3B4854]">ประเภทพนักงาน</p>
+              <div class="flex gap-3">
+                <button
+                  class="w-[130px] flex flex-col items-center justify-between pt-5 pb-4 px-4 rounded-[10px] border-2 transition-all"
+                  :class="
+                    editForm.type === 'lawyer'
+                      ? 'border-dashed border-[#C29F5F] bg-[#FFF2DB]'
+                      : 'border-[#E7E8E9] bg-white'
+                  "
+                  style="min-height: 140px"
+                  @click="editForm.type = 'lawyer'"
+                >
+                  <IconLawScales
+                    width="26"
+                    height="26"
+                    :class="editForm.type === 'lawyer' ? 'text-[#C29F5F]' : 'text-[#8E9AAB]'"
+                  />
+                  <span
+                    class="text-[15px] mt-2"
+                    :class="editForm.type === 'lawyer' ? 'text-[#C29F5F]' : 'text-[#3B4854]'"
+                    >ทนายความ</span
+                  >
+                  <div
+                    class="mt-3 size-[20px] rounded-full border-2 flex items-center justify-center transition-all"
+                    :class="
+                      editForm.type === 'lawyer'
+                        ? 'border-[#C29F5F] bg-[#C29F5F]'
+                        : 'border-[#91969C] bg-white'
+                    "
+                  >
+                    <div
+                      v-if="editForm.type === 'lawyer'"
+                      class="size-[8px] rounded-full bg-white"
+                    />
+                  </div>
+                </button>
+                <button
+                  class="w-[130px] flex flex-col items-center justify-between pt-5 pb-4 px-4 rounded-[10px] border-2 transition-all"
+                  :class="
+                    editForm.type === 'employee'
+                      ? 'border-dashed border-[#C29F5F] bg-[#FFF2DB]'
+                      : 'border-[#E7E8E9] bg-white'
+                  "
+                  style="min-height: 140px"
+                  @click="editForm.type = 'employee'"
+                >
+                  <IconEmployeeCard
+                    width="28"
+                    height="25"
+                    :class="editForm.type === 'employee' ? 'text-[#C29F5F]' : 'text-[#777F87]'"
+                  />
+                  <span
+                    class="text-[15px] mt-2"
+                    :class="editForm.type === 'employee' ? 'text-[#C29F5F]' : 'text-[#3B4854]'"
+                    >พนักงานทั่วไป</span
+                  >
+                  <div
+                    class="mt-3 size-[20px] rounded-full border-2 flex items-center justify-center transition-all"
+                    :class="
+                      editForm.type === 'employee'
+                        ? 'border-[#C29F5F] bg-[#C29F5F]'
+                        : 'border-[#91969C] bg-white'
+                    "
+                  >
+                    <div
+                      v-if="editForm.type === 'employee'"
+                      class="size-[8px] rounded-full bg-white"
+                    />
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- รายละเอียดทนายความ -->
+            <div v-if="editForm.type === 'lawyer'" class="rounded-[8px] bg-[#F3F3F4] p-4 space-y-4">
+              <p class="text-[15px] font-semibold text-[#3B4854]">รายละเอียดทนายความ</p>
+              <base-text-input
+                v-model="editForm.license_no"
+                label="เลขใบประกอบวิชาชีพ"
+                label-type="vertical"
+                placeholder="กรอก"
+                inputClass="bg-white"
+              />
+              <base-data-dropdown-multi-select
+                v-model="editForm.specialization"
+                label="ความเชี่ยวชาญเฉพาะ"
+                label-type="vertical"
+                :options="[
+                  { value: 'คดีแพ่ง', name: 'คดีแพ่ง' },
+                  { value: 'คดีอาญา', name: 'คดีอาญา' },
+                  { value: 'คดีครอบครัว', name: 'คดีครอบครัว' },
+                  { value: 'คดีแรงงาน', name: 'คดีแรงงาน' },
+                  { value: 'คดีภาษี', name: 'คดีภาษี' },
+                  { value: 'คดีล้มละลาย', name: 'คดีล้มละลาย' },
+                  { value: 'คดีปกครอง', name: 'คดีปกครอง' },
+                  { value: 'คดีสิ่งแวดล้อม', name: 'คดีสิ่งแวดล้อม' },
+                ]"
+                placeholder="เลือก"
+                :multiple="true"
+              />
+              <base-data-dropdown-multi-select
+                v-model="editForm.department"
+                label="สังกัด"
+                label-type="vertical"
+                :options="[
+                  { value: 'ฝ่ายกฎหมาย', name: 'ฝ่ายกฎหมาย' },
+                  { value: 'ฝ่ายบริหาร', name: 'ฝ่ายบริหาร' },
+                  { value: 'ฝ่ายบัญชี', name: 'ฝ่ายบัญชี' },
+                  { value: 'ฝ่ายบุคคล', name: 'ฝ่ายบุคคล' },
+                  { value: 'ฝ่ายไอที', name: 'ฝ่ายไอที' },
+                ]"
+                placeholder="ไม่สังกัด"
+              />
+            </div>
+
+            <base-textarea
+              v-model="editForm.remark"
+              label="หมายเหตุ"
+              label-type="vertical"
+              placeholder="กรอก"
+              :rows="4"
+            />
+          </template>
+        </div>
+
+        <!-- Bottom Buttons -->
+        <div class="sticky bottom-0 bg-white px-6 py-4 flex justify-start gap-3">
+          <template v-if="!isEditing">
+            <button
+              class="h-[50px] px-[24px] rounded-[6px] text-[16px] font-medium text-white bg-[#0F182A] hover:bg-[#0F182A]/80 transition-all flex items-center gap-2"
+              @click="handleEditStart"
+            >
+              <IconPencil class="text-white" />
+              แก้ไข
+            </button>
+            <base-button
+              class="!h-[50px] !bg-[#EDEFF1] !text-[#8E9AAB]"
+              @click="userStore.logout()"
+            >
+              ออกจากระบบ
+            </base-button>
+          </template>
+          <template v-else>
+            <button
+              class="h-[50px] px-[24px] rounded-[6px] text-[16px] font-medium text-white bg-[#0F182A] hover:bg-[#0F182A]/80 transition-all"
+              @click="handleSaveProfile"
+            >
+              บันทึก
+            </button>
+            <button
+              class="h-[50px] px-[20px] rounded-[6px] text-[16px] font-medium text-[#8E9AAB] bg-[#EDEFF1] hover:bg-[#E0E2E5] transition-all"
+              @click="handleCancelEdit"
+            >
+              ยกเลิก
+            </button>
+          </template>
+        </div>
+      </div>
+
+      <!-- Right: Tabs + Content -->
+      <div class="flex-1 min-w-0 space-y-[25px] max-[1400px]:w-full">
+        <!-- ความปลอดภัย Tab -->
+        <div class="space-y-4">
+          <!-- เปลี่ยนรหัสผ่าน -->
+          <div class="border border-[#E7E8E9] rounded-[8px] p-6 space-y-4">
+            <p class="text-[20px] text-[#3b4854]">เปลี่ยนรหัสผ่าน</p>
+
+            <!-- Warning box -->
+            <div
+              class="bg-[#FFF2DB] rounded-[10px] px-5 py-4 flex items-start justify-between gap-3"
+            >
+              <div>
+                <p class="text-[18px] text-[#FFAB00]">
+                  ตรวจสอบให้แน่ใจว่าเป็นไปตามข้อกำหนดเหล่านี้
+                </p>
+                <p class="text-[15px] text-[#FFAB00]">
+                  ความยาวอย่างน้อย 8 ตัวอักษร ตัวพิมพ์ใหญ่ และสัญลักษณ์
+                </p>
+              </div>
+              <!-- <IconX class="text-[#FFAB00]" /> -->
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div class="">
+                <baseTextInput
+                  v-model="newPasswordForm.password"
+                  type="password"
+                  label="รหัสผ่านใหม่"
+                  labelType="vertical"
+                  placeholder="••••••••"
+                  :error="newPasswordErrors.password"
+                />
+              </div>
+              <div class="">
+                <baseTextInput
+                  v-model="newPasswordForm.confirmPassword"
+                  type="password"
+                  label="ยืนยันรหัสผ่าน"
+                  labelType="vertical"
+                  placeholder="••••••••"
+                  :error="newPasswordErrors.confirmPassword"
+                />
+              </div>
+            </div>
+
+            <base-button
+              variant="primary"
+              class="!text-white rounded-[6px] !bg-[#0F182A]"
+              @click="handleUpdatePassword"
+            >
+              เปลี่ยนรหัสผ่าน
+            </base-button>
+          </div>
+
+          <!-- ประวัติการเข้าสู่ระบบ -->
+          <section class="mb-[15px] overflow-hidden !border-b-0">
+            <div class="text-[20px] text-[#3B4854] font-regular w-full pb-[20px] p-[20px]">
+              ประวัติการเข้าสู่ระบบ
+            </div>
+            <BaseDataTable
+              :table="{
+                columns: [
+                  {
+                    field: 'browser',
+                    header: 'บราวเซอร์',
+                    // field_search: 'browser',
+                    // search: 'text',
+                    // sort: true,
+                  },
+                  {
+                    field: 'device',
+                    header: 'เครื่อง',
+                    // field_search: 'device',
+                    // search: 'text',
+                    // sort: true,
+                  },
+                  {
+                    field: 'location',
+                    header: 'จุดเข้าใช้งาน',
+                    // field_search: 'location',
+                    // search: 'text',
+                    // sort: true,
+                  },
+                  {
+                    field: 'insert_date_time',
+                    header: 'วันเวลาที่เข้าใช้งาน',
+                    // field_search: 'datetime',
+                    search: 'date-show-time',
+                    // sort: true,
+                  },
+                ],
+              }"
+              :data="loginLogs"
+              :rowClass="'even:!bg-[#fff] hover:bg-[#f8f8f8]'"
+              :text_no_data="!isLoadingLogs ? 'กำลังโหลดข้อมูล...' : 'ยังไม่มีข้อมูล'"
+            >
+              <template #cell-browser="{ row }">
+                <div class="flex items-center gap-[10px]">
+                  <IconWindows v-if="row.icon_name === 'windows'" class="text-[#00BCD4]" />
+                  <IconMac v-else-if="row.icon_name === 'mac'" class="text-[#000000]" />
+                  <div class="">{{ row.browser }}</div>
+                </div>
+              </template>
+              <template #cell-location="{ row }">
+                <a
+                  v-if="row.location"
+                  :href="`https://ipinfo.io/${row.location}`"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-[#007AE8] underline hover:opacity-70"
+                >
+                  <IconMapPin class="inline-block mr-1 text-[#007AE8] min-w-[20px]" />
+                  {{ row.location }}
+                </a>
+                <span v-else class="text-[#AEB3B9]">-</span>
+              </template>
+            </BaseDataTable>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- Block Confirm Modal -->
+    <base-modal
+      v-if="openBlock"
+      open
+      title="หยุดใช้งาน"
+      subtitle="ผู้ใช้จะไม่สามารถเข้าใช้งานระบบได้"
+      action-button
+      action-text="หยุด"
+      variant="danger"
+      :showBody="false"
+      @primary="handleBlock()"
+      @close="
+        () => {
+          openBlock = false
+        }
+      "
+    >
+    </base-modal>
+
+    <base-modal
+      v-if="openUnblock"
+      open
+      title="เริ่มใช้งาน"
+      subtitle="ผู้ใช้จะสามารถเข้าใช้งานระบบได้"
+      action-button
+      action-text="เริ่ม"
+      :showBody="false"
+      @primary="handleUnblock()"
+      @close="
+        () => {
+          openUnblock = false
+        }
+      "
+    >
+    </base-modal>
+  </div>
+</template>

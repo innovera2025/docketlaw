@@ -1,0 +1,45 @@
+<template>
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+    <g id="event_2_" data-name="event (2)" transform="translate(-2 -2)">
+      <path
+        id="Path_156939"
+        data-name="Path 156939"
+        d="M21.025,2.975A3.312,3.312,0,0,0,18.669,2H5.331A3.331,3.331,0,0,0,2,5.331V18.669A3.331,3.331,0,0,0,5.331,22H18.669A3.331,3.331,0,0,0,22,18.669V5.331a3.312,3.312,0,0,0-.975-2.356ZM3.919,3.919a1.981,1.981,0,0,1,1.412-.587H18.669a2,2,0,0,1,2,2v2H3.331v-2a1.981,1.981,0,0,1,.587-1.412ZM20.081,20.081a1.981,1.981,0,0,1-1.413.588H5.331a2,2,0,0,1-2-2v-10H20.669v10a1.981,1.981,0,0,1-.587,1.413Z"
+        transform="translate(0 0)"
+        fill="currentColor"
+      />
+      <circle
+        id="Ellipse_1644"
+        data-name="Ellipse 1644"
+        cx="0.669"
+        cy="0.669"
+        r="0.669"
+        transform="translate(13.331 4.662)"
+        fill="currentColor"
+      />
+      <circle
+        id="Ellipse_1645"
+        data-name="Ellipse 1645"
+        cx="0.669"
+        cy="0.669"
+        r="0.669"
+        transform="translate(9.331 4.662)"
+        fill="currentColor"
+      />
+      <path
+        id="Path_156940"
+        data-name="Path 156940"
+        d="M15.2,14.8a4.669,4.669,0,1,0,4.669,4.669A4.669,4.669,0,0,0,15.2,14.8Zm0,8a3.331,3.331,0,1,1,3.331-3.331A3.331,3.331,0,0,1,15.2,22.8Z"
+        transform="translate(-3.199 -4.8)"
+        fill="currentColor"
+      />
+      <path
+        id="Path_156941"
+        data-name="Path 156941"
+        d="M18.267,18.5H16.93v2.356a.669.669,0,0,0,.669.663h1.687V20.188H18.267Z"
+        transform="translate(-5.599 -6.188)"
+        fill="currentColor"
+      />
+    </g>
+  </svg>
+</template>

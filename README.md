@@ -52,7 +52,7 @@ cd vue.lawfirm.docketlaw
 npm install
 
 # สร้างไฟล์ environment
-cp .env.example .env.development
+cp .env.production .env.development
 ```
 
 ### Commands
@@ -86,7 +86,7 @@ cd vue.lawfirm.admin
 npm install
 
 # สร้างไฟล์ environment
-cp .env.example .env.development
+cp .env.production .env.development
 ```
 
 ### Commands
